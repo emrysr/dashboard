@@ -138,35 +138,6 @@ function curve_value(feed,rate){
   return val;
 }
 
-// function setup_widget_canvas(elementclass){
-//   $('.'+elementclass).each(function(index){
-//     var widgetId = $(this).attr("id");
-//     var width = $(this).width();
-//     var height = $(this).height();
-//     var canvas = $(this).children('canvas');
-//     var canvasid = "can-"+widgetId;
-
-//     // 1) Create canvas if it does not exist
-//     if (!canvas[0]){
-//       $(this).html('<canvas id="'+canvasid+'"></canvas>');
-//     }
-
-//     // 2) Resize canvas if it needs resizing
-//     if (canvas.attr("width") != width) canvas.attr("width", width);
-//     if (canvas.attr("height") != height) canvas.attr("height", height);
-
-//     var canvas = document.getElementById(canvasid);
-//     if (browserVersion != 999) {
-//       canvas.setAttribute('width', width);
-//       canvas.setAttribute('height', height);
-//       if ( typeof G_vmlCanvasManager != "undefined") G_vmlCanvasManager.initElement(canvas);
-//     }
-//     // 3) Get and store the canvas context
-//     widgetcanvas[canvasid] = canvas.getContext("2d");
-//   });
-// }
-
-
 function setup_widget_canvas(elementclass){
   $('.'+elementclass).each(function(index){
   
