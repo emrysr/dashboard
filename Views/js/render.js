@@ -26,6 +26,8 @@ var widgetcanvas = {};
 var dialrate = 0.15;
 var browserVersion = 999;
 var fast_update_fps = 25;
+// Get the device pixel ratio, falling back to 1.
+var dpr = window.devicePixelRatio || 1;
 
 var Browser = {
   Version : function()
@@ -136,30 +138,68 @@ function curve_value(feed,rate){
   return val;
 }
 
+// function setup_widget_canvas(elementclass){
+//   $('.'+elementclass).each(function(index){
+//     var widgetId = $(this).attr("id");
+//     var width = $(this).width();
+//     var height = $(this).height();
+//     var canvas = $(this).children('canvas');
+//     var canvasid = "can-"+widgetId;
+
+//     // 1) Create canvas if it does not exist
+//     if (!canvas[0]){
+//       $(this).html('<canvas id="'+canvasid+'"></canvas>');
+//     }
+
+//     // 2) Resize canvas if it needs resizing
+//     if (canvas.attr("width") != width) canvas.attr("width", width);
+//     if (canvas.attr("height") != height) canvas.attr("height", height);
+
+//     var canvas = document.getElementById(canvasid);
+//     if (browserVersion != 999) {
+//       canvas.setAttribute('width', width);
+//       canvas.setAttribute('height', height);
+//       if ( typeof G_vmlCanvasManager != "undefined") G_vmlCanvasManager.initElement(canvas);
+//     }
+//     // 3) Get and store the canvas context
+//     widgetcanvas[canvasid] = canvas.getContext("2d");
+//   });
+// }
+
+
 function setup_widget_canvas(elementclass){
   $('.'+elementclass).each(function(index){
+  
     var widgetId = $(this).attr("id");
-    var width = $(this).width();
-    var height = $(this).height();
     var canvas = $(this).children('canvas');
     var canvasid = "can-"+widgetId;
 
     // 1) Create canvas if it does not exist
     if (!canvas[0]){
       $(this).html('<canvas id="'+canvasid+'"></canvas>');
+      canvas = $(this).children('canvas');
     }
+    
+    var rect = canvas[0].getBoundingClientRect();
+    var width = rect.width;
+    var height = rect.height;
 
     // 2) Resize canvas if it needs resizing
-    if (canvas.attr("width") != width) canvas.attr("width", width);
-    if (canvas.attr("height") != height) canvas.attr("height", height);
+    // canvas[0].style.backgroundColor = 'red';
+    canvas[0].style.transform = "scale("+(1/dpr)+") translate("+(0-width)+"px, "+(0-height)+"px)"
+    canvas[0].width = width * dpr;
+    canvas[0].height = height * dpr;
+    canvas[0].style.width = (100 * dpr)+"%;"
+    canvas[0].style.height = (100 * dpr)+"%";
 
     var canvas = document.getElementById(canvasid);
     if (browserVersion != 999) {
-      canvas.setAttribute('width', width);
-      canvas.setAttribute('height', height);
+      canvas.setAttribute('width', width * dpr);
+      canvas.setAttribute('height', height * dpr);
       if ( typeof G_vmlCanvasManager != "undefined") G_vmlCanvasManager.initElement(canvas);
     }
     // 3) Get and store the canvas context
     widgetcanvas[canvasid] = canvas.getContext("2d");
+    widgetcanvas[canvasid].scale(dpr, dpr);
   });
 }
