@@ -80,7 +80,7 @@ var designer = {
 
     "end_save_undo_state": function(identifier){
         if (designer.nextundostate === null) {
-            console.log("No undo state to save!");
+            // console.log("No undo state to save!");
             return;
         }
         var currentstate = $("#page").html();
@@ -445,7 +445,7 @@ var designer = {
 
         // Fill the modal configuration window with options
         $("#widget_options_body").html(options_html);
-
+        $('#myModalLabel').find('.badge').text($("#"+selected_box).attr('class'))
         // Change the size of the text for items with class options - size initially set by bootstrap
         // also add height of 30 px for color inputs for Firefox
         $('input, select, textarea').css('font-size','12px');
@@ -469,7 +469,7 @@ var designer = {
             for (p in feedgroups[f]) {
                 var feedref = feedgroups[f][p]['id']
                 if (designer.feedmode=="tagname") feedref = feedgroups[f][p]['tag']+":"+feedgroups[f][p]['name']
-                console.log("feedref:"+feedref);
+                // console.log("feedref:"+feedref);
                 var selected = "";
                 if (currentval == feedref)
                     selected = "selected";

@@ -35,7 +35,7 @@ if (!isset($dashboard['feedmode'])) $dashboard['feedmode'] = "feedid";
     <div id="widget_options" class="modal hide keyboard" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true" data-backdrop="static">
         <div class="modal-header">
             <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
-            <h3 id="myModalLabel"><?php echo _('Configure element'); ?></h3>
+            <h3 id="myModalLabel"><?php echo _('Configure element'); ?> <span class="badge badge-info"></span></h3>
         </div>
         <div id="widget_options_body" class="modal-body"></div>
         <div class="modal-footer">
@@ -82,7 +82,7 @@ function addListeners() {
 }
 
 function mouseUp() {
-  $(window).off("touchmove mousemove", null, toolboxMove);
+    $(window).off("touchmove mousemove", null, toolboxMove);
 }
 
 function mouseDown(e) {
@@ -112,7 +112,7 @@ function toolboxMove(e) {
   if (posy < 50 ) posy = 50;
 	
   $('#toolbox').css({position: 'absolute', left: posx+'px', top: posy+'px'});
-  console.log("posx:" + posx + "posy:" + posy);
+  //console.log("posx:" + posx + "posy:" + posy);
 }
 </script>
 
@@ -134,7 +134,7 @@ function toolboxMove(e) {
     designer.canvas = "#can";
     designer.grid_size = <?php echo $dashboard['gridsize']; ?>;
     designer.feedmode = "<?php echo $dashboard['feedmode']; ?>";
-    console.log("designer.feedmode: "+designer.feedmode);
+    // console.log("designer.feedmode: "+designer.feedmode);
     designer.widgets = widgets;
     designer.init();
 

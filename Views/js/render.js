@@ -26,8 +26,9 @@ var widgetcanvas = {};
 var dialrate = 0.15;
 var browserVersion = 999;
 var fast_update_fps = 25;
+
 // Get the device pixel ratio, falling back to 1.
-var dpr = window.devicePixelRatio || 1;
+var scale = window.devicePixelRatio || 1;
 
 var Browser = {
   Version : function()
@@ -114,6 +115,7 @@ function update(first_time){
 function fast_update(){
   if (redraw){ 
     for (z in widget){
+      // console.log('fast_update()', widget[z]+'_init')
       var fname = widget[z]+"_init";
       var fn = window[fname];
       fn();
@@ -140,37 +142,82 @@ function curve_value(feed,rate){
 
 function setup_widget_canvas(elementclass){
   $('.'+elementclass).each(function(index){
-  
-    var widgetId = $(this).attr("id");
-    var canvas = $(this).children('canvas');
+    var $this = $(this)
+    var widgetId = $this.attr("id");
+    var canvas = $this.children('canvas');
     var canvasid = "can-"+widgetId;
 
     // 1) Create canvas if it does not exist
     if (!canvas[0]){
-      $(this).html('<canvas id="'+canvasid+'"></canvas>');
-      canvas = $(this).children('canvas');
+      $this.html('<canvas id="'+canvasid+'"></canvas>');
+      canvas = $this.children('canvas');
     }
-    
-    var rect = canvas[0].getBoundingClientRect();
-    var width = rect.width;
-    var height = rect.height;
+    if(typeof designer != 'undefined'){
+      var width = designer.boxlist[widgetId].width;
+      var height = designer.boxlist[widgetId].height;
+      
+      widthIsInPixels = designer.boxlist[widgetId]["styleUnitWidth"] == 0
+      heightIsInPixels = designer.boxlist[widgetId]["styleUnitHeight"] == 0
+      
+      designer.boxlist[widgetId]["width"] = width
+      designer.boxlist[widgetId]["height"] = height
+      // if not in design view derive diementions from bounding box (will not be resizable)
+    } else {
+      var rect = canvas[0].getBoundingClientRect();
+      width = rect.width;
+      height = rect.height;
+      // widthIsInPixels = designer.boxlist[widgetId]["styleUnitWidth"] == 0
+      // heightIsInPixels = designer.boxlist[widgetId]["styleUnitHeight"] == 0
+    }
+
+    // resize correction for specific widgts
+    // @todo: directly modify the widget and remove this correction
+    if(elementclass=='thresholds') {
+      var rect = canvas[0].getBoundingClientRect();
+      width = rect.width;
+      height = rect.height;
+    }
 
     // 2) Resize canvas if it needs resizing
-    // canvas[0].style.backgroundColor = 'red';
-    canvas[0].style.transform = "scale("+(1/dpr)+") translate("+(0-width)+"px, "+(0-height)+"px)"
-    canvas[0].width = width * dpr;
-    canvas[0].height = height * dpr;
-    canvas[0].style.width = (100 * dpr)+"%;"
-    canvas[0].style.height = (100 * dpr)+"%";
+    // make the canvas container relative
+    $this[0].style.position = 'absolute'
 
+    // offset the resized canvas to account for the scaling so that it sits top-left
+    // calculate the values
+    dpiWidth = width * scale
+    dpiHeight = height * scale
+    translate = [
+      (0-dpiHeight)+'px',
+      (0-dpiWidth)+'px'
+    ].join(' ')
+    // set the values to the css properties
+    cssProperties = {
+      transform: 'scale('+scale+') translate('+translate+')',
+      transformOrigin: '0 0',
+      left: '0',
+      top: '0',
+    // enlarge the widget by the a factor of "display resolution"
+      width: width+'px',
+      height: height+'px'
+    }
+    // set each property value to the object's css value
+    // @note: jquery css() method calculates height & width differently
+    for(property in cssProperties){
+      canvas[0].style[property] = cssProperties[property]
+    }
+    // reduce the element using css to account for the display's resolution
+    // @note: jquery height() & width() method calculates height & width differently
+    canvas[0].width = dpiWidth
+    canvas[0].height = dpiHeight
+    
     var canvas = document.getElementById(canvasid);
     if (browserVersion != 999) {
-      canvas.setAttribute('width', width * dpr);
-      canvas.setAttribute('height', height * dpr);
+      canvas[0].width  = dpiWidth;
+      canvas[0].height = dpiHeight;
       if ( typeof G_vmlCanvasManager != "undefined") G_vmlCanvasManager.initElement(canvas);
     }
     // 3) Get and store the canvas context
     widgetcanvas[canvasid] = canvas.getContext("2d");
-    widgetcanvas[canvasid].scale(dpr, dpr);
+    widgetcanvas[canvasid].scale(scale, scale);
   });
 }
