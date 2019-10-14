@@ -154,7 +154,7 @@
         <form v-if="gridData.length > 0" id="search" class="form-inline position-relative mb-0">
             <div class="form-group">
                 <input id="search-box" name="query" v-model="searchQuery" type="search" class="form-control input-medium mb-0" aria-describedby="searchHelp" placeholder="<?php echo _('Search') ?>" title="<?php echo _('Search the data by any column') ?>">
-                <button id="searchclear" @click.prevent="searchQuery = ''"style="right:0" class="btn btn-link position-absolute" :class="{'d-none':searchQuery.length===0}"><svg class="icon"><use xlink:href="#icon-close"></use></svg></button>
+                <button id="searchclear" @click.prevent="searchQuery = ''" style="right:0" class="btn btn-link position-absolute" :class="{'d-none':searchQuery.length===0}"><svg class="icon"><use xlink:href="#icon-close"></use></svg></button>
             </div>
         </form>
     </div>
@@ -174,9 +174,8 @@
 
 <script src="<?php echo $path; ?>Modules/dashboard/dashboard.js"></script>
 <script src="<?php echo $path; ?>Lib/vue.min.js"></script>
-<!-- <script src="/emoncms/Modules/config/vue.js"></script> -->
-
 <script src="<?php echo $path; ?>Lib/misc/gettext.js"></script>
+<script src="<?php echo $path; ?>Lib/gridjs/grid.js"></script>
 <script>
     /**
      * return plain js object with gettext translated strings
@@ -243,6 +242,7 @@
         data: {
             wait: 800, // time to wait before sending data
             timeouts: {},
+            selected: '',
             classes: { // css class names
                 success: 'success',
                 error: 'error',
