@@ -484,6 +484,53 @@ var designer = {
             var other = select.parent().next();
             var input = other.find('input');
         })
+
+        // add link to help file in edit popup
+        // ---------------------------------------------------------------------
+        // use HEAD http call to download headers only
+        // default url: /Modules/dashboard/widget/[widget name]/README.md
+        var widgetHelpFileName = window.widgetHelpFiles && window.widgetHelpFiles[widget] || 
+        widget + '/README.md';
+        var widgetHelpFileUrl = widgetHelpFileName;
+        // if url not full or absolute add the correct path
+        if(!widgetHelpFileUrl.match(/^(https?|\/)/g)) {
+            var base = path + 'Modules/dashboard/widget/';
+            // @see: dashbaord_edit_view.php->absolute();
+            if (typeof absolute === 'function') {
+                widgetHelpFileUrl = absolute(base, widgetHelpFileName)
+            } else {
+                widgetHelpFileUrl = base + widgetHelpFileName;
+            }
+        }
+        // if not already checked, test to see if file exists
+        if (!window.widgetHelpFilesChecked) {
+            // create object if not available
+            window.widgetHelpFilesChecked = {};
+        }
+        if (!window.widgetHelpFilesChecked[widget]) {
+            $.ajax({
+                url: widgetHelpFileUrl,
+                type:'HEAD',
+                beforeSend: function() {
+                    // reset the link
+                    $('#open-widget-help-modal').addClass('d-none hide').removeData('help-file');
+                }
+            }).done(function() {
+                // show the link - file exists
+                $('#open-widget-help-modal').removeClass('d-none hide')
+                .data('help-file', widgetHelpFileUrl);
+                // save successful responses to avoid unrequired http requests
+                window.widgetHelpFilesChecked[widget] = widgetHelpFileUrl;
+            }).fail(function(xhr, error, message) {
+                // problem downloading readme or 404 not found
+                console.info('Widget readme not found', error, xhr.status, message);
+            });
+        } else {
+            // 200-OK already received
+            $('#open-widget-help-modal').removeClass('d-none hide')
+            .data('help-file', window.widgetHelpFilesChecked[widget]);
+        }
+        // ---------------------------------------------------------------------
     },
     
     "select_feed": function (id, feedlist, type, currentval){

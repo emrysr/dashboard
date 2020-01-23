@@ -34,7 +34,15 @@ if (!isset($dashboard['feedmode'])) $dashboard['feedmode'] = "feedid";
     <div id="widget_options" class="modal hide keyboard" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true" data-backdrop="static">
         <div class="modal-header">
             <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
-            <h3 id="myModalLabel"><?php echo dgettext('dashboard_messages','Configure element'); ?></h3>
+            <h3 id="myModalLabel"><?php echo dgettext('dashboard_messages','Configure element'); ?>
+            <!-- button shown if readme available -->
+                <button id="open-widget-help-modal" role="button" class="btn d-none" 
+                  data-target="#widget-help-modal"
+                  data-toggle="modal"
+                >
+                  <svg class="icon icon-help"><use xlink:href="#icon-help"></use></svg>
+                </button>
+            </h3>
         </div>
         <div id="widget_options_body" class="modal-body"></div>
         <div class="modal-footer">
@@ -171,3 +179,140 @@ function toolboxMove(e) {
         designer.draw();
     });
 </script>
+
+
+
+
+
+<!-- Help Modal -->
+<style>
+    #open-widget-help-modal {
+        position: absolute;
+        margin: 0 .4em;
+    }
+    #widget-help-modal{
+        z-index:1051;
+    }
+    .widget-help-backdrop {
+        z-index:1050;
+        background-color: #FFF;
+    }
+    @media(min-width:767px) {
+        .modal.modal-wide {
+            width: 750px;
+            margin-left: -375px;
+        }
+    }
+</style>
+
+<div id="widget-help-modal" class="modal modal-wide hide fade" 
+    tabindex="-1" role="dialog"
+    aria-labelledby="widget-help-label" 
+    aria-hidden="true"
+>
+  <div class="modal-header">
+    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+    <h3 id="widget-help-label">Readme</h3>
+  </div>
+  <div class="modal-body"></div>
+  <div class="modal-footer">
+    <button class="btn btn-primary" data-dismiss="modal" aria-hidden="true">Close</button>
+  </div>
+</div>
+
+
+<script src="<?php echo $path ?>Modules/dashboard/lib/showdown.min.js"></script>
+<script>
+$(function() {
+    showdown.setFlavor('github');
+    var converter = new showdown.Converter();
+
+    /**
+     * load helpfile as markdown and render as html in modal overlay
+     * supply url in opening button data. eg: [data-help-file="README.md"]
+     * if directly linking to image, <img> tag created to display the image
+     * image paths (src) are re-written to be absolute urls
+     */
+    $('#widget-help-modal').on('show', function(event) {
+        var $modal = $(this)
+
+        // $backdrop property not available initially
+        setTimeout(function() {
+            $modal.data('modal').$backdrop.addClass('widget-help-backdrop');
+        }, 0);
+        var button = $('[data-target="#' + $modal.attr('id') + '"]');
+        var modalBody = $modal.find('.modal-body');
+        var file_path = button.data('help-file');
+        var base = path + 'Modules/dashboard/widget/';
+        var file_url = absolute(base, file_path);
+
+        var widget_base = file_url.split('/').slice(0,-1).join('/') + '/';
+        var supported_images = ['.png','.gif','.jpg','.jpeg'];
+        var file_name = file_path.split('?').slice(0,file_path.indexOf('?')>-1?-1:1).join('').split('/').pop().toLowerCase();
+        var file_extention = '.' + file_name.split('.').pop();
+        // if button links to remote file...
+        if(file_path) {
+            if(supported_images.indexOf(file_extention) > -1) {
+            // use <img> tag if remote is image - link to fullsize 
+                $('<img>').appendTo(modalBody).attr('src', file_path).wrap('<a target="_blank" href="' + file_url + '"></a>');
+            } else {
+                // download <html>
+                $.get(file_url, function(html, status, xhr) {
+                    var type = xhr.getResponseHeader("content-type") || "";
+                    if(type === 'text/markdown') {
+                        // convert to html if help text is markdown
+                        html = converter.makeHtml(html);
+                    }
+                    modalBody.html(html);
+                    // replace relative image/link paths
+                    modalBody.find('a,img').each(function(index, elem) {
+                        var $elem = $(elem);
+                        var absolute_url;
+                        if(elem.tagName === 'A') {
+                            absolute_url = absolute(widget_base, $elem.attr('href'));
+                            $elem.attr('href', absolute_url);
+                        } else {
+                            absolute_url = absolute(widget_base, $elem.attr('src'));
+                            $elem.attr('src', absolute_url);
+                        }
+                    });
+                });
+            }
+        }
+    })
+});
+
+/**
+ * add base path to relative string
+ * checks for ../ and ./
+ * returns original if no relative url passed
+ * @param {String} base url used as the 'base' for relative url convertion
+ * @param {String} relative path to be converted
+ * @return {String}
+ */
+function absolute(base, relative) {
+    if(relative.match(/^(https?|\/)/g)) return relative;
+    var stack = base.split("/"),
+        parts = relative.split("/");
+    stack.pop(); // remove current file name (or empty string)
+                 // (omit if "base" is the current folder without trailing slash)
+    for (var i=0; i<parts.length; i++) {
+        if (parts[i] == ".")
+            continue;
+        if (parts[i] == "..")
+            stack.pop();
+        else
+            stack.push(parts[i]);
+    }
+    return stack.join("/");
+}
+</script>
+
+<svg aria-hidden="true" style="position: absolute; width: 0; height: 0; overflow: hidden;" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <defs>
+        <symbol id="icon-help" viewBox="0 0 32 32">
+            <!--title>help</title-->
+            <path d="M20.063 15c0.75-0.75 1.25-1.813 1.25-3 0-2.938-2.375-5.313-5.313-5.313s-5.313 2.375-5.313 5.313h2.625c0-1.438 1.25-2.688 2.688-2.688s2.688 1.25 2.688 2.688c0 0.75-0.313 1.375-0.813 1.875l-1.625 1.688c-0.938 1-1.563 2.313-1.563 3.75v0.688h2.625c0-2 0.625-2.75 1.563-3.75zM17.313 25.313v-2.625h-2.625v2.625h2.625zM16 2.688c7.375 0 13.313 5.938 13.313 13.313s-5.938 13.313-13.313 13.313-13.313-5.938-13.313-13.313 5.938-13.313 13.313-13.313z"></path>
+        </symbol>
+    </defs>
+</svg>
