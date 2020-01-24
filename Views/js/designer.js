@@ -485,12 +485,17 @@ var designer = {
             var input = other.find('input');
         })
 
-        // add link to help file in edit popup
+        $('#widget_options').find('.modal-footer .widget-name').text(widget);
+
+        // add link to help file in edit popup (button in modal-header)
         // ---------------------------------------------------------------------
-        // use HEAD http call to download headers only
+        // check if file on server. use HEAD http call to download headers only
         // default url: /Modules/dashboard/widget/[widget name]/README.md
+        // custom filename can be added to *_render.js for each module.
+        //  eg. window.widgetHelpFiles.kwhperiod = 'kwhperiod/kwhperiod_render.md'
+
         var widgetHelpFileName = window.widgetHelpFiles && window.widgetHelpFiles[widget] || 
-        widget + '/README.md';
+            widget + '/README.md';
         var widgetHelpFileUrl = widgetHelpFileName;
         // if url not full or absolute add the correct path
         if(!widgetHelpFileUrl.match(/^(https?|\/)/g)) {
@@ -508,17 +513,19 @@ var designer = {
             window.widgetHelpFilesChecked = {};
         }
         if (!window.widgetHelpFilesChecked[widget]) {
+            // not already checked
             $.ajax({
                 url: widgetHelpFileUrl,
-                type:'HEAD',
+                type: 'HEAD',
                 beforeSend: function() {
                     // reset the link
-                    $('#open-widget-help-modal').addClass('d-none hide').removeData('help-file');
+                    $('#open-widget-help-modal').addClass('d-none hide')[0]
+                    .removeAttribute('data-help-file');
                 }
             }).done(function() {
                 // show the link - file exists
-                $('#open-widget-help-modal').removeClass('d-none hide')
-                .data('help-file', widgetHelpFileUrl);
+                $('#open-widget-help-modal').removeClass('d-none hide')[0]
+                .dataset.helpFile = widgetHelpFileUrl;
                 // save successful responses to avoid unrequired http requests
                 window.widgetHelpFilesChecked[widget] = widgetHelpFileUrl;
             }).fail(function(xhr, error, message) {
@@ -527,8 +534,8 @@ var designer = {
             });
         } else {
             // 200-OK already received
-            $('#open-widget-help-modal').removeClass('d-none hide')
-            .data('help-file', window.widgetHelpFilesChecked[widget]);
+            $('#open-widget-help-modal').removeClass('d-none hide')[0]
+            .dataset.helpFile = window.widgetHelpFilesChecked[widget];
         }
         // ---------------------------------------------------------------------
     },

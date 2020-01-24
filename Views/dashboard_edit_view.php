@@ -36,16 +36,14 @@ if (!isset($dashboard['feedmode'])) $dashboard['feedmode'] = "feedid";
             <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
             <h3 id="myModalLabel"><?php echo dgettext('dashboard_messages','Configure element'); ?>
             <!-- button shown if readme available -->
-                <button id="open-widget-help-modal" role="button" class="btn d-none" 
-                  data-target="#widget-help-modal"
-                  data-toggle="modal"
-                >
+                <button id="open-widget-help-modal" role="button" class="btn d-none" onclick="readme.open(event);">
                   <svg class="icon icon-help"><use xlink:href="#icon-help"></use></svg>
                 </button>
             </h3>
         </div>
         <div id="widget_options_body" class="modal-body"></div>
         <div class="modal-footer">
+            <p class="pull-left"><small class="muted"><em class="widget-name"></em></small></p>
             <button class="btn" data-dismiss="modal" aria-hidden="true"><?php echo dgettext('dashboard_messages','Cancel'); ?></button>
             <button id="options-save" class="btn btn-primary"><?php echo dgettext('dashboard_messages','Save changes'); ?></button>
         </div>
@@ -190,7 +188,7 @@ function toolboxMove(e) {
         position: absolute;
         margin: 0 .4em;
     }
-    #widget-help-modal{
+    .widget-help-modal{
         z-index:1051;
     }
     .widget-help-backdrop {
@@ -203,97 +201,217 @@ function toolboxMove(e) {
             margin-left: -375px;
         }
     }
+    .slide-down-enter-active {
+        animation: .6s cubic-bezier(0.2, 0.6, 0.3, 1) slide-down;
+    }
+    .slide-down-leave-active {
+        animation: .4s slide-down reverse;
+    }
+    @keyframes slide-down {
+        0% {
+            top: -25%;
+        }
+        100% {
+            top: 10%;
+        }
+    }
+    .fade-enter-active {
+        animation: fade-in .5s;
+    }
+    .fade-leave-active {
+        animation: fade-in .5s reverse;
+    }
+    @keyframes fade-in {
+        0% {
+            opacity: 0;
+        }
+        100% {
+            opacity: .8;
+        }
+    }
 </style>
 
-<div id="widget-help-modal" class="modal modal-wide hide fade" 
-    tabindex="-1" role="dialog"
-    aria-labelledby="widget-help-label" 
-    aria-hidden="true"
->
-  <div class="modal-header">
-    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
-    <h3 id="widget-help-label">Readme</h3>
-  </div>
-  <div class="modal-body"></div>
-  <div class="modal-footer">
-    <button class="btn btn-primary" data-dismiss="modal" aria-hidden="true">Close</button>
-  </div>
+<div id="readme" v-cloak>
+    <template>
+        <transition name="slide-down">
+        <div v-if="!hidden" @click.stop class="modal modal-wide widget-help-modal"
+            tabindex="-1" role="dialog"
+            aria-labelledby="widget-help-label" 
+            aria-hidden="true">
+            <div class="modal-header">
+                <button type="button" class="close" @click="close" aria-hidden="true">×</button>
+                <h3 id="widget-help-label"><?php echo _('Readme') ?></h3>
+            </div>
+            <div class="modal-body" v-html="html"></div>
+            <div class="modal-footer">
+                <button class="btn btn-primary" @click="close" aria-hidden="true">Close</button>
+            </div>
+        </div>
+        </transition>
+        <transition name="fade">
+            <div v-if="!hidden" class="modal-backdrop widget-help-backdrop"></div>
+        </transition>
+    </template>
 </div>
 
 
+<script src="<?php echo $path ?>Lib/vue.min.js"></script>
 <script src="<?php echo $path ?>Modules/dashboard/lib/showdown.min.js"></script>
 <script>
-$(function() {
-    showdown.setFlavor('github');
-    var converter = new showdown.Converter();
+showdown.setFlavor('github');
+var converter = new showdown.Converter();
 
-    /**
-     * load helpfile as markdown and render as html in modal overlay
-     * supply url in opening button data. eg: [data-help-file="README.md"]
-     * if directly linking to image, <img> tag created to display the image
-     * image paths (src) are re-written to be absolute urls
-     */
-    $('#widget-help-modal').on('show', function(event) {
-        var $modal = $(this)
+function clearSelection() {
+    if (window.getSelection) {
+        window.getSelection().removeAllRanges();
+    } else if (document.selection) {
+        document.selection.empty();
+    }
+}
 
-        // $backdrop property not available initially
-        setTimeout(function() {
-            $modal.data('modal').$backdrop.addClass('widget-help-backdrop');
-        }, 0);
-        var button = $('[data-target="#' + $modal.attr('id') + '"]');
-        var modalBody = $modal.find('.modal-body');
-        var file_path = button.data('help-file');
-        var base = path + 'Modules/dashboard/widget/';
-        var file_url = absolute(base, file_path);
-
-        var widget_base = file_url.split('/').slice(0,-1).join('/') + '/';
-        var supported_images = ['.png','.gif','.jpg','.jpeg'];
-        var file_name = file_path.split('?').slice(0,file_path.indexOf('?')>-1?-1:1).join('').split('/').pop().toLowerCase();
-        var file_extention = '.' + file_name.split('.').pop();
-        // if button links to remote file...
-        if(file_path) {
-            if(supported_images.indexOf(file_extention) > -1) {
-            // use <img> tag if remote is image - link to fullsize 
-                $('<img>').appendTo(modalBody).attr('src', file_path).wrap('<a target="_blank" href="' + file_url + '"></a>');
-            } else {
-                // download <html>
-                $.get(file_url, function(html, status, xhr) {
-                    var type = xhr.getResponseHeader("content-type") || "";
-                    if(type === 'text/markdown') {
-                        // convert to html if help text is markdown
-                        html = converter.makeHtml(html);
-                    }
-                    modalBody.html(html);
-                    // replace relative image/link paths
-                    modalBody.find('a,img').each(function(index, elem) {
-                        var $elem = $(elem);
-                        var absolute_url;
-                        if(elem.tagName === 'A') {
-                            absolute_url = absolute(widget_base, $elem.attr('href'));
-                            $elem.attr('href', absolute_url);
-                        } else {
-                            absolute_url = absolute(widget_base, $elem.attr('src'));
-                            $elem.attr('src', absolute_url);
-                        }
-                    });
-                });
+const readme = new Vue({
+    el:'#readme',
+    data: {
+        file_path: '',
+        hidden: true,
+        widgets_path: 'Modules/dashboard/widget/',
+        supported_images: ['.png','.gif','.jpg','.jpeg'],
+        cache: {}
+    },
+    watch: {
+        file_path: function(newValue) {
+            this.setCache();
+        },
+        cache: {
+            deep: true,
+            handler: function(newValue) {
+                // todo: set something
             }
         }
-    })
-});
+    },
+    computed: {
+        html: {
+            get: function() {
+                return this.cache[this.current_widget] || '';
+            },
+            set: function() {
+                return true;
+            }
+        },
+        base: function () {
+            return path + this.widgets_path;
+        },
+        widget_base: function() { // widget directory
+            var base = this.file_url.split('/').slice(0,-1).join('/')
+            return  base !== '' ? base + '/': '';
+        },
+        file_url: function() { // full url
+            return absolute(this.base, this.file_path)
+        },
+        file_name: function() {
+            return this.file_path.split('?').slice(0,this.file_path.indexOf('?')>-1?-1:1).join('').split('/').pop().toLowerCase();
+        },
+        file_extention: function() {
+            var extention = this.file_name.split('.').pop()
+            return extention !== '' ? '.' + extention: '';
+        },
+        current_widget: function() {
+            return this.file_path.toLowerCase().replace(this.file_name,'').split('/').filter(Boolean).pop();
+        }
+    },
+    methods: {
+        setCache: function() {
+            if(!this.cache[this.current_widget]) {
+                // if not already downloaded...
+                if(this.supported_images.indexOf(this.file_extention) > -1) {
+                    this.cache[this.current_widget] = getImageLink();
+                    // show overlay
+                    vm.hidden = false;
+                } else {
+                    var vm = this;
+                    $.get(this.file_url)
+                    .done(function(html, status, xhr) {
+                        var container = document.createElement("div");
+                        var type = xhr.getResponseHeader("content-type") || "";
+                        // convert from markdown format
+                        if(type === 'text/markdown') {
+                            html = converter.makeHtml(html);
+                        }
+                        // replace relative image/link paths
+                        container.innerHTML = html;
+                        container = vm.replaceReativeLinks(container);
+                        if(vm.current_widget) {
+                            vm.cache[vm.current_widget] = container.innerHTML;
+                            // show overlay
+                            vm.hidden = false;
+                        }
+                    });
+                }
+            }
+        },
+        getImageLink: function() {
+            // use <img> tag if remote is image - link to fullsize
+            var img = document.createElement("img");
+            img.src = file_url;
+            img.alt = this.widget;
+            return '<a target="_blank" href="' + url + '">' + img.outerHTML + '</a>';
+        },
+        replaceReativeLinks: function(container) {
+            var elements = container.querySelectorAll('a, img');
+            var vm = this;
+            elements.forEach(function(elem) {
+                if(elem.tagName === 'A') {
+                    elem.href = absolute(vm.widget_base, elem.getAttribute("href"));
+                } else {
+                    elem.src = absolute(vm.widget_base, elem.getAttribute("src"));
+                }
+            });
+            return container;
+        },
+        /**
+         * open the modal and get the widget's readme
+         */
+        open: function(event) {
+            var button = event.currentTarget;
+            event.stopPropagation();
+            if(button.dataset.helpFile) {
+                if(this.file_path === button.dataset.helpFile) {
+                    this.hidden = false;
+                } else {
+                    this.file_path = button.dataset.helpFile;
+                }
+                clearSelection(); // fix bug with text being highlighted as modal fades in.
+            }
+        },
+        close: function(event) {
+            this.hidden = true;
+            var button = event.currentTarget;
+            event.stopPropagation();
+            // this.file_path = '';
+        }
+    }
+})
+
+// hide on click
+document.addEventListener('click', readme.close, false);
+
 
 /**
- * add base path to relative string
+ * add base url to relative path
+ * 
  * checks for ../ and ./
- * returns original if no relative url passed
+ * returns path if not relative or empty
+ * 
  * @param {String} base url used as the 'base' for relative url convertion
- * @param {String} relative path to be converted
+ * @param {String} path to be converted
  * @return {String}
  */
-function absolute(base, relative) {
-    if(relative.match(/^(https?|\/)/g)) return relative;
+function absolute(base, path) {
+    if(path.match(/^(https?|\/)/g)) return path;
+    if(!path) return '';
+
     var stack = base.split("/"),
-        parts = relative.split("/");
+        parts = path.split("/");
     stack.pop(); // remove current file name (or empty string)
                  // (omit if "base" is the current folder without trailing slash)
     for (var i=0; i<parts.length; i++) {
