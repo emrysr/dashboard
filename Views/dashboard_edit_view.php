@@ -324,9 +324,9 @@ const readme = new Vue({
             if(!this.cache[this.current_widget]) {
                 // if not already downloaded...
                 if(this.supported_images.indexOf(this.file_extention) > -1) {
-                    this.cache[this.current_widget] = getImageLink();
+                    this.cache[this.current_widget] = this.getImageLink();
                     // show overlay
-                    vm.hidden = false;
+                    this.hidden = false;
                 } else {
                     var vm = this;
                     $.get(this.file_url)
@@ -352,9 +352,9 @@ const readme = new Vue({
         getImageLink: function() {
             // use <img> tag if remote is image - link to fullsize
             var img = document.createElement("img");
-            img.src = file_url;
+            img.src = this.file_url;
             img.alt = this.widget;
-            return '<a target="_blank" href="' + url + '">' + img.outerHTML + '</a>';
+            return '<a target="_blank" href="' + this.file_url + '">' + img.outerHTML + '</a>';
         },
         replaceReativeLinks: function(container) {
             var elements = container.querySelectorAll('a, img');
