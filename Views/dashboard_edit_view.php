@@ -329,7 +329,7 @@ const readme = new Vue({
                     this.hidden = false;
                 } else {
                     var vm = this;
-                    $.get(this.file_url)
+                    $.get(this.file_url, {cache: false})
                     .done(function(html, status, xhr) {
                         var container = document.createElement("div");
                         var type = xhr.getResponseHeader("content-type") || "";

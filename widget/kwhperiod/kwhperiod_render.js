@@ -23,7 +23,8 @@ if (!previousRefresh) {
 // # Widget User Guide:
 // if not using default `./README.md` specify file here:
 if(!window.widgetHelpFiles) window.widgetHelpFiles = {};
-window.widgetHelpFiles.kwhperiod = 'kwhperiod/kwhperiod_render.md'
+// window.widgetHelpFiles.kwhperiod = 'kwhperiod/kwhperiod_render.md'
+// window.widgetHelpFiles.kwhperiod = 'kwhperiod/kwhperiod_doco.png'
 // --------------------------------------------------------
 
 function addOption (
