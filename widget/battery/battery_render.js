@@ -83,6 +83,7 @@ function battery_widgetlist(){
   addOption(widgets["battery"], "battery_title",         "value",         _Tr("Battery title"),   _Tr("Battery title"),                                                         []);
   addOption(widgets["battery"], "max",                   "value",         _Tr("Max value"),       _Tr("Max value to show"),                                                     []);
   addOption(widgets["battery"], "min",                   "value",         _Tr("Min value"),       _Tr("Min value to show"),                                                     []); //TT
+  addOption(widgets["battery"], "segments",              "value",         _Tr("Segements"),       _Tr("Number of battery bars"),                           []);
   addOption(widgets["battery"], "scale",                 "value",         _Tr("Scale"),           _Tr("Value is multiplied by scale before display"),                           []);
   addOption(widgets["battery"], "units",                 "dropbox_other", _Tr("Units"),           _Tr("Units to show"),                                                         _SI);
   addOption(widgets["battery"], "unitend",               "dropbox",       _Tr("Unit position"),   _Tr("Where should the unit be shown"),                                        unitEndOptions);
@@ -153,7 +154,7 @@ function battery_draw(){
       var cap_width = battery_width/3;
       var line_width = 2;
       var margin = 1;
-      var number_of_blocks = 5;
+      var number_of_blocks = 1*$(this).attr('segments') || 5;
 
       var fontname;
       if (font === "0"){fontname = "Impact";}
